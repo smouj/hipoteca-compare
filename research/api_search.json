@@ -1,0 +1,92 @@
+[
+  {
+    "url": "https://www.bde.es/wbe/es/estadisticas/temas/cuentas-financieras/anuncios-cuentas-financieras/nuevo-servicio-web-api-para-la-descarga-de-datos-del-banco-de-espana.html",
+    "name": "Nuevo servicio web (API) para la descarga de datos del",
+    "snippet": "22 Apr 2025 — El nuevo servicio web ( API ) permite integrar los datos de las estadísticas que publica el Banco de España directamente en los programas de ...\n22-Apr-2025 — El nuevo servicio web (API) permite integrar los datos de las estadísticas que publica el Banco de España directamente en los programas de ...",
+    "host_name": "www.bde.es",
+    "rank": 0,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://datos.gob.es/es",
+    "name": "Datos abiertos del Gobierno de España",
+    "snippet": "Proporcionamos un catálogo de empresas y organismos que han creado soluciones novedosas en base al uso, entre otros, de datos puestos a disposición por las ...",
+    "host_name": "datos.gob.es",
+    "rank": 1,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.bde.es/webbe/es/estadisticas/recursos/api-estadisticas-bde.html",
+    "name": "Servicio web de Estadísticas (API)",
+    "snippet": "Resoluciones denegatorias ... Tipos de interés · Tipos de cambio · Definición y funciones del dinero.\nTipos de cambio · Definición y funciones del dinero ... como en los archivos CSV (o Excel) asociados a los cuadros estadísticos que el Banco de ...",
+    "host_name": "www.bde.es",
+    "rank": 2,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.boe.es/datosabiertos/api/api.php",
+    "name": "Datos abiertos (OpenData)",
+    "snippet": "La Agencia Estatal Boletín Oficial del Estado pone a disposición de la ciudadanía una API para facilitar el acceso, la descarga y la reutilización de la ...",
+    "host_name": "www.boe.es",
+    "rank": 3,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://datos.gob.es/es/blog/datos-sobre-el-sector-bancario-fuentes-de-acceso",
+    "name": "Datos sobre el sector bancario: fuentes de acceso",
+    "snippet": "21 Apr 2025 — A través del Catálogo Nacional de datos abiertos de datos.gob.es se puede acceder a una gran cantidad de conjuntos de datos relacionados con la ...",
+    "host_name": "datos.gob.es",
+    "rank": 4,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.bde.es/webbe/es/estadisticas/temas/tipos-interes.html",
+    "name": "Estadísticas de tipos de interés",
+    "snippet": "Esta sección recoge información de tipos de interés legales y otros tipos utilizados como referencia, estadísticas de tipos de interés aplicados por las ...",
+    "host_name": "www.bde.es",
+    "rank": 5,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://datos.bancomundial.org/pais/espana",
+    "name": "España | Data",
+    "snippet": "Estadísticas trimestrales sobre deuda externa · Fondo Fiduciario para el Fortalecimiento de la Capacidad Estadística.",
+    "host_name": "datos.bancomundial.org",
+    "rank": 6,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.tesoro.es/deuda-publica/historico-de-estadisticas/tipo-inter%C3%A9s-medio",
+    "name": "Tipo interés medio - Deuda Pública",
+    "snippet": "Valores en emisión · Valores en circulación ...",
+    "host_name": "www.tesoro.es",
+    "rank": 7,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.bde.es/webbe/en/estadisticas/recursos/api-estadisticas-bde.html",
+    "name": "Statistics web service (API)",
+    "snippet": "The BACH database · \"Compara ...\nThe BACH database · \"Compara tu ... Interest rates · Exchange rates · Definition and functions of money.",
+    "host_name": "www.bde.es",
+    "rank": 8,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://datos.bancomundial.org/indicador/FR.INR.RINR?locations=ES",
+    "name": "Tasa de interés real (%) - Spain | Data",
+    "snippet": "Prima de riesgo por préstamo (tasa de la prima menos tasa de los bonos del tesoro, %) · Diferencial de tasas de interés (tasa activa ...",
+    "host_name": "datos.bancomundial.org",
+    "rank": 9,
+    "date": "",
+    "favicon": ""
+  }
+]

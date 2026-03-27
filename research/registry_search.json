@@ -1,0 +1,92 @@
+[
+  {
+    "url": "https://www.bde.es/wbe/es/entidades-profesionales/operativa-gestiones/registros/registros-entidades",
+    "name": "Registros de entidades",
+    "snippet": "Consulta online de los registros de intermediarios de crédito inmobiliario y prestamistas ...",
+    "host_name": "www.bde.es",
+    "rank": 0,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.bde.es/wbe/es/estadisticas/otras-clasificaciones/clasificacion-entidades/listas-instituciones-financieras",
+    "name": "Listas de instituciones financieras",
+    "snippet": "El Banco de España publica las siguientes listas de instituciones financieras , que se actualizan diariamente, de todos los países de la Unión Europea. Asimismo, ...",
+    "host_name": "www.bde.es",
+    "rank": 1,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.cnmv.es/portal/consultas/listadoentidad?id=1&tipoent=7&lang=es",
+    "name": "Listado de entidades de crédito españolas",
+    "snippet": "BANCO DE CREDITO SOCIAL COOPERATIVO, S.A. · Código Banco de España : 240 · Dirección: CL. CIUDAD FINANCIERA N.1 PARQUE ...",
+    "host_name": "www.cnmv.es",
+    "rank": 2,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.dsca.gob.es/es/consumo/novedades/registro-intermediarios-financieros",
+    "name": "Registro de intermediarios financieros",
+    "snippet": "La Dirección General de Consumo ha puesto a disposición de las personas consumidoras y usuarias un servicio de información y consulta sobre el Registro Estatal ...",
+    "host_name": "www.dsca.gob.es",
+    "rank": 3,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://sedeelectronica.bde.es/sede/es/tramites/registro-entidades-p82.html",
+    "name": "Alta en el Registro de entidades - Sede Electrónica BdE",
+    "snippet": "Cómo iniciar la presentación. Accede al Registro Electrónico desde \"Iniciar tramitación\" utilizando los sistemas de autenticación aceptados por el Banco de ...",
+    "host_name": "sedeelectronica.bde.es",
+    "rank": 4,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://sedeelectronica.bde.es/sede/es/tramites/registro-intermediarios-credito-inmobiliario-p218.html",
+    "name": "Registro de intermediarios de crédito inmobiliario y",
+    "snippet": "Accede a registro de intermediarios de crédito inmobiliario y prestamistas inmobiliarios para ciudadanos. ¡Consulta toda la información aquí!",
+    "host_name": "sedeelectronica.bde.es",
+    "rank": 5,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://sedeelectronica.bde.es/sede/es/tramites/consultas-certificados-entidades-registros-p81.html",
+    "name": "Consultas y certificados sobre entidades inscritas en los",
+    "snippet": "Las consultas o solicitudes de certificados sobre entidades se pueden realizar en este proceso, según si se trata de registros públicos o no.",
+    "host_name": "sedeelectronica.bde.es",
+    "rank": 6,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.bde.es/webbe/es/estadisticas/otras-clasificaciones/clasificacion-entidades/listas-instituciones-financieras/listas-instituciones-financieras-monetarias-pais/lista-mfi-es.html",
+    "name": "Lista de instituciones financieras monetarias en España",
+    "snippet": "Lista de instituciones financieras monetarias en España actualizada diariamente.",
+    "host_name": "www.bde.es",
+    "rank": 7,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.bde.es/wbe/es/punto-informacion/instituciones-financieras",
+    "name": "Instituciones financieras",
+    "snippet": "Registros de entidades . Sugerencias. Ayúdanos a mejorar.",
+    "host_name": "www.bde.es",
+    "rank": 8,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.bde.es/wbe/es/areas-actuacion/supervision-entidades-financieras/entidades-supervisadas",
+    "name": "Entidades supervisadas",
+    "snippet": "Registro on-line de entidades .",
+    "host_name": "www.bde.es",
+    "rank": 9,
+    "date": "",
+    "favicon": ""
+  }
+]
