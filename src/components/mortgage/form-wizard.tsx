@@ -15,6 +15,7 @@ import { ChevronLeft, ChevronRight, Calculator, RotateCcw, Home, CreditCard, Use
 interface FormWizardProps {
   onSubmit: (scenario: UserScenario) => void;
   isLoading: boolean;
+  onStepChange?: (step: number, formData: FormData) => void;
 }
 
 const STEPS = [
@@ -44,7 +45,7 @@ function loadSavedFormData(): FormData {
   return DEFAULT_FORM_DATA;
 }
 
-export function FormWizard({ onSubmit, isLoading }: FormWizardProps) {
+export function FormWizard({ onSubmit, isLoading, onStepChange }: FormWizardProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<FormData>(loadSavedFormData);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -57,6 +58,13 @@ export function FormWizard({ onSubmit, isLoading }: FormWizardProps) {
       console.error('Failed to save form data:', e);
     }
   }, [formData]);
+
+  // Notify parent of step and data changes
+  useEffect(() => {
+    if (onStepChange) {
+      onStepChange(currentStep, formData);
+    }
+  }, [currentStep, formData, onStepChange]);
 
   const updateFormData = useCallback((updates: Partial<FormData>) => {
     setFormData((prev) => ({ ...prev, ...updates }));

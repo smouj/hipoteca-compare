@@ -294,3 +294,18 @@ Error: listen EADDRINUSE: address already in use :::3000
  GET / 200 in 17ms (compile: 2ms, render: 14ms)
  GET / 200 in 22ms (compile: 2ms, render: 20ms)
 ✓ Compiled in 578ms
+ GET / 200 in 249ms (compile: 77ms, render: 172ms)
+ GET / 200 in 66ms (compile: 3ms, render: 63ms)
+ GET / 200 in 69ms (compile: 42ms, render: 27ms)
+ GET / 200 in 17ms (compile: 1740µs, render: 15ms)
+ GET / 200 in 18ms (compile: 2ms, render: 16ms)
+ GET / 200 in 11ms (compile: 1360µs, render: 10ms)
+ GET / 200 in 18ms (compile: 1944µs, render: 16ms)
+ GET / 200 in 13ms (compile: 1628µs, render: 11ms)
+ GET / 200 in 14ms (compile: 1367µs, render: 13ms)
+ GET / 200 in 20ms (compile: 3ms, render: 17ms)
+ GET / 200 in 16ms (compile: 2ms, render: 14ms)
+ GET / 200 in 15ms (compile: 1589µs, render: 13ms)
+✓ Compiled in 202ms
+✓ Compiled in 209ms
+✓ Compiled in 142ms

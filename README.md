@@ -1,11 +1,12 @@
 # HipotecaCompare
 
-Comparador profesional de hipotecas en España. Aplicación web para analizar y comparar ofertas hipotecarias de los principales bancos españoles.
+Comparador profesional de hipotecas en España con asistente AI integrado. Aplicación web para analizar y comparar ofertas hipotecarias de los principales bancos españoles.
 
 ## Características
 
 - **Motor de cálculos financieros**: Sistema de amortización francés, cálculo de TAE, escenarios variables
 - **Scoring inteligente**: Puntuación compuesta con factores ponderados (coste, flexibilidad, transparencia, solidez)
+- **Asistente AI (HipotecaBot)**: Chat integrado para resolver dudas sobre hipotecas en tiempo real
 - **Formulario multi-paso**: Wizard interactivo con validación y persistencia local
 - **20+ ofertas hipotecarias**: Datos de 10 bancos españoles principales
 - **Análisis de escenarios**: Proyecciones para hipotecas variables y mixtas (base, conservador, adverso)

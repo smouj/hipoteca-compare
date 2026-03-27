@@ -3,16 +3,18 @@
 import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { UserScenario, ScoredOffer, CompareMortgagesResponse } from '@/types/mortgage';
+import { UserScenario, ScoredOffer, CompareMortgagesResponse, FormData } from '@/types/mortgage';
 import { FormWizard } from '@/components/mortgage/form-wizard';
 import { ResultsList } from '@/components/mortgage/results-list';
+import { ChatAssistant } from '@/components/mortgage/chat-assistant';
 import { 
   Building2, 
   Calculator, 
   Shield, 
   TrendingUp, 
   AlertCircle,
-  ChevronLeft
+  ChevronLeft,
+  MessageCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -20,6 +22,8 @@ export default function Home() {
   const [results, setResults] = useState<ScoredOffer[] | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [formData, setFormData] = useState<FormData | null>(null);
 
   const handleSubmit = async (scenario: UserScenario) => {
     setIsLoading(true);
@@ -57,6 +61,11 @@ export default function Home() {
     setError(null);
   };
 
+  const handleStepChange = (step: number, data: FormData) => {
+    setCurrentStep(step);
+    setFormData(data);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       {/* Header */}
@@ -83,8 +92,8 @@ export default function Home() {
                 <span>Cálculo preciso</span>
               </div>
               <div className="flex items-center gap-2">
-                <TrendingUp className="h-4 w-4 text-emerald-600" />
-                <span>Actualizado</span>
+                <MessageCircle className="h-4 w-4 text-emerald-600" />
+                <span>Asistente AI</span>
               </div>
             </div>
           </div>
@@ -123,16 +132,16 @@ export default function Home() {
             </div>
 
             {/* Features Grid */}
-            <div className="grid md:grid-cols-3 gap-6 mb-8">
+            <div className="grid md:grid-cols-4 gap-4 mb-8">
               <Card className="border-slate-200 bg-white">
                 <CardContent className="pt-6">
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 rounded-lg bg-emerald-100">
-                      <Calculator className="h-6 w-6 text-emerald-600" />
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-emerald-100">
+                      <Calculator className="h-5 w-5 text-emerald-600" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-slate-900">Cálculo preciso</h3>
-                      <p className="text-sm text-slate-500">TAE real y escenarios</p>
+                      <h3 className="font-semibold text-slate-900 text-sm">Cálculo preciso</h3>
+                      <p className="text-xs text-slate-500">TAE real y escenarios</p>
                     </div>
                   </div>
                 </CardContent>
@@ -140,13 +149,13 @@ export default function Home() {
 
               <Card className="border-slate-200 bg-white">
                 <CardContent className="pt-6">
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 rounded-lg bg-amber-100">
-                      <TrendingUp className="h-6 w-6 text-amber-600" />
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-amber-100">
+                      <TrendingUp className="h-5 w-5 text-amber-600" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-slate-900">Scoring inteligente</h3>
-                      <p className="text-sm text-slate-500">Personalizado para ti</p>
+                      <h3 className="font-semibold text-slate-900 text-sm">Scoring inteligente</h3>
+                      <p className="text-xs text-slate-500">Personalizado para ti</p>
                     </div>
                   </div>
                 </CardContent>
@@ -154,13 +163,27 @@ export default function Home() {
 
               <Card className="border-slate-200 bg-white">
                 <CardContent className="pt-6">
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 rounded-lg bg-blue-100">
-                      <Shield className="h-6 w-6 text-blue-600" />
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-slate-100">
+                      <Shield className="h-5 w-5 text-slate-600" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-slate-900">Datos verificados</h3>
-                      <p className="text-sm text-slate-500">De fuentes oficiales</p>
+                      <h3 className="font-semibold text-slate-900 text-sm">Datos verificados</h3>
+                      <p className="text-xs text-slate-500">Fuentes oficiales</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-slate-200 bg-white">
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-emerald-100">
+                      <MessageCircle className="h-5 w-5 text-emerald-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-slate-900 text-sm">Asistente AI</h3>
+                      <p className="text-xs text-slate-500">Resuelve tus dudas</p>
                     </div>
                   </div>
                 </CardContent>
@@ -182,7 +205,8 @@ export default function Home() {
               <CardContent className="pt-6">
                 <FormWizard 
                   onSubmit={handleSubmit} 
-                  isLoading={isLoading} 
+                  isLoading={isLoading}
+                  onStepChange={handleStepChange}
                 />
               </CardContent>
             </Card>
@@ -192,7 +216,7 @@ export default function Home() {
               <p className="text-sm text-slate-500 mb-4">
                 Comparamos ofertas de los principales bancos en España
               </p>
-              <div className="flex flex-wrap justify-center gap-4 opacity-60">
+              <div className="flex flex-wrap justify-center gap-3 opacity-60">
                 {['Santander', 'BBVA', 'CaixaBank', 'Bankinter', 'Sabadell', 'ING'].map((bank) => (
                   <div 
                     key={bank}
@@ -303,6 +327,13 @@ export default function Home() {
           </div>
         </div>
       </footer>
+
+      {/* AI Chat Assistant */}
+      <ChatAssistant 
+        currentStep={currentStep !== null ? `Paso ${currentStep + 1} de 5` : undefined}
+        formData={formData as unknown as Record<string, unknown>}
+        resultsCount={results?.length}
+      />
     </div>
   );
 }
