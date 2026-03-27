@@ -40,14 +40,17 @@ export function StepLoan({ formData, updateFormData, errors }: StepLoanProps) {
     ? Math.round((formData.loanAmount / formData.propertyPrice) * 100) 
     : 0;
 
-  // Calculate minimum down payment required
-  const minDownPayment = formData.propertyPrice > 0
-    ? Math.round(formData.propertyPrice * (1 - maxLtv))
+  // Calculate minimum down payment for standard LTV (80%)
+  const standardMinDownPayment = formData.propertyPrice > 0
+    ? Math.round(formData.propertyPrice * 0.20) // 20% entrada para 80% LTV
     : 0;
 
   // Calculate savings needed (down payment + costs ~10% of property price)
   const estimatedCosts = formData.propertyPrice * 0.10; // Taxes, notary, etc.
   const totalSavingsNeeded = formData.downPayment + estimatedCosts;
+
+  // Determine LTV risk level
+  const ltvRiskLevel = ltv > 90 ? 'high' : ltv > 80 ? 'medium' : 'low';
 
   // Handle loan amount change
   const handleLoanChange = (value: string) => {
@@ -208,7 +211,7 @@ export function StepLoan({ formData, updateFormData, errors }: StepLoanProps) {
             Entrada disponible
           </Label>
           <p className="text-sm text-slate-500">
-            Mínimo recomendado: {formatCurrency(minDownPayment)}
+            Recomendado: {formatCurrency(standardMinDownPayment)} (20% para LTV 80%)
           </p>
         </div>
         
@@ -224,12 +227,11 @@ export function StepLoan({ formData, updateFormData, errors }: StepLoanProps) {
           <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium">€</span>
         </div>
 
-        {formData.downPayment > 0 && formData.downPayment < minDownPayment && (
+        {formData.downPayment >= 0 && formData.downPayment < standardMinDownPayment * 0.5 && formData.downPayment > 0 && (
           <Alert className="bg-amber-50 border-amber-200">
             <AlertCircle className="h-4 w-4 text-amber-600" />
             <AlertDescription className="text-amber-800">
-              La entrada es inferior al mínimo del {Math.round((1 - maxLtv) * 100)}% recomendado. 
-              Podrías necesitar financiación adicional.
+              Entrada baja. Las mejores condiciones suelen requerir al menos 20% de entrada (LTV 80%).
             </AlertDescription>
           </Alert>
         )}
@@ -239,13 +241,27 @@ export function StepLoan({ formData, updateFormData, errors }: StepLoanProps) {
         )}
       </div>
 
-      {/* High LTV Warning */}
-      {isLTVHigh && isPurchase && (
-        <Alert className="bg-amber-50 border-amber-200">
-          <Info className="h-4 w-4 text-amber-600" />
-          <AlertDescription className="text-amber-800">
-            <strong>Financiación superior al 80%:</strong> Es posible que necesites 
-            contratar un seguro de impago o aval. Consulta con el banco.
+      {/* High LTV Warnings */}
+      {ltv > 80 && isPurchase && (
+        <Alert className={`border-2 ${ltv > 90 ? 'bg-red-50 border-red-300' : 'bg-amber-50 border-amber-300'}`}>
+          <AlertCircle className={`h-5 w-5 ${ltv > 90 ? 'text-red-600' : 'text-amber-600'}`} />
+          <AlertDescription className={`${ltv > 90 ? 'text-red-800' : 'text-amber-800'}`}>
+            {ltv > 95 ? (
+              <>
+                <strong>Financiación del {ltv}%:</strong> Prácticamente sin entrada. 
+                Muy pocos bancos ofrecen este nivel. Espera condiciones más estrictas y tipos más altos.
+              </>
+            ) : ltv > 90 ? (
+              <>
+                <strong>Financiación del {ltv}%:</strong> Alta financiación disponible en algunos bancos. 
+                Requiere seguro de impago o aval, y tipos ligeramente superiores.
+              </>
+            ) : (
+              <>
+                <strong>Financiación del {ltv}%:</strong> Excede el 80% estándar. 
+                Disponible con seguro de impago. El tipo puede ser 0.1-0.3% superior.
+              </>
+            )}
           </AlertDescription>
         </Alert>
       )}

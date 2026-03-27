@@ -314,3 +314,7 @@ Error: listen EADDRINUSE: address already in use :::3000
 ✓ Compiled in 145ms
  GET / 200 in 55ms (compile: 38ms, render: 17ms)
 ✓ Compiled in 115ms
+✓ Compiled in 141ms
+✓ Compiled in 176ms
+✓ Compiled in 187ms
+ GET / 200 in 57ms (compile: 40ms, render: 17ms)

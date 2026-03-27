@@ -20,11 +20,14 @@ export const CURRENT_EURIBOR = 2.496;
 /** Number of months in a year */
 const MONTHS_PER_YEAR = 12;
 
-/** Maximum LTV for usual residence mortgages in Spain */
-export const MAX_LTV_USUAL_RESIDENCE = 0.80;
+/** 
+ * Maximum LTV for usual residence mortgages in Spain
+ * Note: LTV > 80% typically requires mortgage insurance or additional guarantees
+ */
+export const MAX_LTV_USUAL_RESIDENCE = 1.0; // 100% - allows full financing
 
 /** Maximum LTV for second residence mortgages */
-export const MAX_LTV_SECOND_RESIDENCE = 0.70;
+export const MAX_LTV_SECOND_RESIDENCE = 0.90; // 90%
 
 /** Maximum debt-to-income ratio recommended in Spain */
 export const MAX_DEBT_TO_INCOME_RATIO = 0.35;
