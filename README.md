@@ -1,5 +1,8 @@
 # HipotecaCompare
 
+[![GitHub stars](https://img.shields.io/github/stars/smouj/hipoteca-compare?style=social)](https://github.com/smouj/hipoteca-compare)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 Comparador profesional de hipotecas en España con asistente AI integrado. Aplicación web para analizar y comparar ofertas hipotecarias de los principales bancos españoles.
 
 ## Características
@@ -51,7 +54,8 @@ src/
 │       ├── step-summary.tsx     # Paso 5: Resumen
 │       ├── offer-card.tsx       # Tarjeta de oferta
 │       ├── results-list.tsx     # Lista de resultados
-│       └── score-breakdown.tsx  # Desglose de puntuación
+│       ├── score-breakdown.tsx  # Desglose de puntuación
+│       └── chat-assistant.tsx   # Asistente AI
 ├── lib/
 │   ├── calculations.ts          # Motor de cálculos
 │   ├── scoring.ts               # Sistema de scoring
@@ -66,7 +70,7 @@ src/
 
 ```bash
 # Clonar el repositorio
-git clone https://github.com/tu-usuario/hipoteca-compare.git
+git clone https://github.com/smouj/hipoteca-compare.git
 cd hipoteca-compare
 
 # Instalar dependencias
@@ -88,6 +92,23 @@ bun run dev
 3. Revisa los resultados ordenados por puntuación
 4. Filtra y compara las ofertas
 5. Exporta los resultados a CSV si lo deseas
+
+## Asistente AI (HipotecaBot)
+
+La aplicación incluye un asistente AI integrado que puede ayudarte con:
+
+- Explicaciones sobre tipos de hipotecas (fija, variable, mixta)
+- Información sobre el Euríbor y cómo afecta a tu hipoteca
+- Dudas sobre comisiones y productos vinculados
+- Requisitos para conseguir una hipoteca en España
+- Qué es el LTV, TAE y otros términos financieros
+
+El asistente está contextualizado y conoce:
+- El paso actual del formulario donde estás
+- Los datos que has introducido
+- Los resultados de la comparación
+
+Para usarlo, haz clic en el botón verde de chat en la esquina inferior derecha.
 
 ## Sistema de scoring
 
