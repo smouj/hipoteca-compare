@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { FormData, DEFAULT_FORM_DATA, UserScenario, PropertyDetails, BorrowerProfile, MortgagePreferences, OperationType, PropertyType } from '@/types/mortgage';
+import { FormData, DEFAULT_FORM_DATA, UserScenario, PropertyDetails, BorrowerProfile, MortgagePreferences, OperationType, PropertyType, createDefaultBorrower } from '@/types/mortgage';
 import { StepOperation } from './step-operation';
 import { StepLoan } from './step-loan';
 import { StepBorrower } from './step-borrower';
@@ -30,19 +30,23 @@ const STORAGE_KEY = 'hipoteca-compare-form-data';
 
 // Helper function to load saved form data
 function loadSavedFormData(): FormData {
-  if (typeof window === 'undefined') return DEFAULT_FORM_DATA;
+  if (typeof window === 'undefined') return { ...DEFAULT_FORM_DATA, borrowers: [createDefaultBorrower(1)] };
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       const parsed = JSON.parse(saved) as FormData;
       if (parsed && typeof parsed.propertyPrice === 'number') {
+        // Ensure borrowers array exists
+        if (!parsed.borrowers || parsed.borrowers.length === 0) {
+          parsed.borrowers = [createDefaultBorrower(1)];
+        }
         return parsed;
       }
     }
   } catch (e) {
     console.error('Failed to load saved form data:', e);
   }
-  return DEFAULT_FORM_DATA;
+  return { ...DEFAULT_FORM_DATA, borrowers: [createDefaultBorrower(1)] };
 }
 
 export function FormWizard({ onSubmit, isLoading, onStepChange }: FormWizardProps) {
@@ -100,17 +104,24 @@ export function FormWizard({ onSubmit, isLoading, onStepChange }: FormWizardProp
         }
         break;
       case 2: // Borrower
-        if (!formData.employmentType) {
-          newErrors.employmentType = 'Selecciona tu situación laboral';
-        }
-        if (formData.monthlyIncome <= 0) {
-          newErrors.monthlyIncome = 'Introduce tus ingresos mensuales';
-        }
-        if (formData.age < 18 || formData.age > 80) {
-          newErrors.age = 'La edad debe estar entre 18 y 80 años';
-        }
-        if (formData.availableSavings <= 0) {
-          newErrors.availableSavings = 'Introduce tus ahorros disponibles';
+        // Validate using borrowers array if available
+        const borrowers = formData.borrowers || [];
+        if (borrowers.length === 0) {
+          newErrors.borrowers = 'Debes añadir al menos un titular';
+        } else {
+          const principalBorrower = borrowers.find(b => b.isPrincipal) || borrowers[0];
+          if (!principalBorrower.employmentType) {
+            newErrors.employmentType = 'Selecciona tu situación laboral';
+          }
+          if (principalBorrower.monthlyNetIncome <= 0) {
+            newErrors.monthlyIncome = 'Introduce tus ingresos mensuales';
+          }
+          if (!principalBorrower.age || principalBorrower.age < 18 || principalBorrower.age > 80) {
+            newErrors.age = 'La edad debe estar entre 18 y 80 años';
+          }
+          if (principalBorrower.availableSavings <= 0) {
+            newErrors.availableSavings = 'Introduce tus ahorros disponibles';
+          }
         }
         break;
       case 3: // Preferences
@@ -141,6 +152,15 @@ export function FormWizard({ onSubmit, isLoading, onStepChange }: FormWizardProp
 
   const handleSubmit = () => {
     if (validateStep(currentStep)) {
+      // Calculate totals from borrowers array
+      const borrowers = formData.borrowers || [];
+      const totalMonthlyIncome = borrowers.reduce((sum, b) => sum + b.monthlyNetIncome + (b.additionalMonthlyIncome || 0), 0);
+      const totalAdditionalIncome = borrowers.reduce((sum, b) => sum + (b.additionalMonthlyIncome || 0), 0);
+      const totalDebtPayments = borrowers.reduce((sum, b) => sum + b.monthlyDebtPayments, 0);
+      const totalSavings = borrowers.reduce((sum, b) => sum + b.availableSavings, 0);
+      const principalBorrower = borrowers.find(b => b.isPrincipal) || borrowers[0];
+      const otherBorrowers = borrowers.filter(b => !b.isPrincipal);
+      
       // Convert FormData to UserScenario
       const scenario: UserScenario = {
         operationType: formData.operationType,
@@ -150,18 +170,19 @@ export function FormWizard({ onSubmit, isLoading, onStepChange }: FormWizardProp
           propertyType: formData.propertyType,
         } as PropertyDetails,
         borrowerProfile: {
-          employmentType: formData.employmentType,
-          employmentMonths: formData.employmentMonths,
-          monthlyIncome: formData.monthlyIncome,
-          additionalIncome: formData.additionalIncome,
-          extraPaymentsPerYear: formData.extraPaymentsPerYear,
-          monthlyDebtPayments: formData.monthlyDebtPayments,
-          availableSavings: formData.availableSavings,
-          age: formData.age,
-          numberOfBorrowers: formData.numberOfBorrowers,
-          coBorrowerIncome: formData.coBorrowerIncome,
-          coBorrowerAge: formData.coBorrowerAge,
-          coBorrowerEmploymentType: formData.coBorrowerEmploymentType,
+          employmentType: principalBorrower?.employmentType || formData.employmentType,
+          employmentMonths: principalBorrower?.employmentMonths || formData.employmentMonths,
+          monthlyIncome: principalBorrower?.monthlyNetIncome || formData.monthlyIncome,
+          additionalIncome: totalAdditionalIncome || formData.additionalIncome,
+          extraPaymentsPerYear: principalBorrower?.extraPaymentsPerYear || formData.extraPaymentsPerYear,
+          monthlyDebtPayments: totalDebtPayments || formData.monthlyDebtPayments,
+          availableSavings: totalSavings || formData.availableSavings,
+          age: principalBorrower?.age || formData.age,
+          numberOfBorrowers: borrowers.length,
+          coBorrowerIncome: otherBorrowers.reduce((sum, b) => sum + b.monthlyNetIncome, 0) || formData.coBorrowerIncome,
+          coBorrowerAge: otherBorrowers[0]?.age || formData.coBorrowerAge,
+          coBorrowerEmploymentType: otherBorrowers[0]?.employmentType || formData.coBorrowerEmploymentType,
+          borrowers: borrowers,
         } as BorrowerProfile,
         preferences: {
           rateTypePreference: formData.rateTypePreference,
@@ -182,7 +203,8 @@ export function FormWizard({ onSubmit, isLoading, onStepChange }: FormWizardProp
   };
 
   const handleReset = () => {
-    setFormData(DEFAULT_FORM_DATA);
+    const freshData = { ...DEFAULT_FORM_DATA, borrowers: [createDefaultBorrower(1)] };
+    setFormData(freshData);
     setCurrentStep(0);
     setErrors({});
     localStorage.removeItem(STORAGE_KEY);

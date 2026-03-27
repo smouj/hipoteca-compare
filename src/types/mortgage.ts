@@ -72,6 +72,21 @@ export enum LinkedProductType {
   INTERNET = 'INTERNET',
 }
 
+export enum MaritalStatus {
+  SINGLE = 'SOLTERO',
+  MARRIED = 'CASADO',
+  DIVORCED = 'DIVORCIADO',
+  WIDOWED = 'VIUDO',
+  CIVIL_UNION = 'PAREJA_HECHO',
+}
+
+export enum EmploymentSector {
+  PRIVATE = 'PRIVADO',
+  PUBLIC = 'PUBLICO',
+  SELF = 'AUTONOMO',
+  RETIRED = 'JUBILADO',
+}
+
 // ============ CORE TYPES ============
 
 export interface RateCondition {
@@ -191,13 +206,118 @@ export interface Bank {
   description?: string;
 }
 
-// ============ USER INPUT TYPES ============
+// ============ BORROWER TYPES (COMPLETE) ============
+
+/**
+ * Complete borrower information for Spanish mortgage operations
+ * Includes all data typically required by Spanish banks
+ */
+export interface Borrower {
+  /** Unique identifier for this borrower */
+  id: string;
+  /** Order/position of this borrower (1 = principal, 2+ = co-borrowers) */
+  order: number;
+  
+  // ===== PERSONAL DATA =====
+  /** Full name (Nombre y apellidos) */
+  fullName: string;
+  /** ID Document number (DNI/NIE) */
+  documentId: string;
+  /** Date of birth (YYYY-MM-DD) */
+  dateOfBirth: string;
+  /** Age calculated from dateOfBirth */
+  age: number;
+  /** Marital status */
+  maritalStatus: MaritalStatus;
+  /** Regimen económico matrimonial (only if married) */
+  matrimonialRegime?: 'GANANCIALES' | 'SEPARACION_BIENES' | 'PARTICIPACION';
+  /** Number of dependents (children, elderly relatives) */
+  dependents: number;
+  /** Phone number */
+  phone?: string;
+  /** Email */
+  email?: string;
+  
+  // ===== EMPLOYMENT DATA =====
+  /** Type of employment */
+  employmentType: EmploymentType;
+  /** Employment sector */
+  employmentSector?: EmploymentSector;
+  /** Company name (for employees) */
+  companyName?: string;
+  /** Activity sector (e.g., 'Tecnología', 'Sanidad', 'Educación') */
+  activitySector?: string;
+  /** Job position/title */
+  jobTitle?: string;
+  /** Months at current job */
+  employmentMonths: number;
+  /** Total working years (for stability assessment) */
+  totalWorkingYears?: number;
+  
+  // ===== SPECIFIC EMPLOYMENT DETAILS =====
+  /** For civil servants: body/level (Cuerpo/Escala) */
+  civilServantBody?: string;
+  /** For civil servants: level (Nivel administrativo) */
+  civilServantLevel?: number;
+  /** For self-employed: years of activity */
+  selfEmployedYears?: number;
+  /** For self-employed: IAE epígrafe */
+  iaeEpigrafe?: string;
+  /** For self-employed: last year's net profit */
+  selfEmployedNetProfit?: number;
+  /** For retired: pension type */
+  pensionType?: 'JUBILACION' | 'VIUDEDAD' | 'INCAPACIDAD' | 'ORFANDAD';
+  
+  // ===== INCOME DATA =====
+  /** Monthly net income (salario neto mensual) */
+  monthlyNetIncome: number;
+  /** Extra payments per year (pagas extraordinarias) */
+  extraPaymentsPerYear: number;
+  /** Total annual income (calculated) */
+  annualIncome: number;
+  /** Additional recurring income (alquileres, rentas, etc.) */
+  additionalMonthlyIncome: number;
+  /** Source of additional income */
+  additionalIncomeSource?: string;
+  /** Other annual income (bonuses, commissions, etc.) */
+  otherAnnualIncome?: number;
+  
+  // ===== DEBT & ASSETS =====
+  /** Monthly debt payments (préstamos, tarjetas, etc.) */
+  monthlyDebtPayments: number;
+  /** List of current debts */
+  debts?: DebtInfo[];
+  /** Available savings for down payment and expenses */
+  availableSavings: number;
+  /** Other assets value (propiedades, inversiones, etc.) */
+  otherAssets?: number;
+  /** Description of other assets */
+  otherAssetsDescription?: string;
+  
+  // ===== METADATA =====
+  /** Is this the principal borrower? */
+  isPrincipal: boolean;
+  /** Ownership percentage (if different from equal split) */
+  ownershipPercentage?: number;
+}
+
+export interface DebtInfo {
+  type: 'PRESTAMO_PERSONAL' | 'PRESTAMO_AUTO' | 'TARJETA_CREDITO' | 'OTRA_HIPOTECA' | 'OTRO';
+  description: string;
+  outstandingAmount: number;
+  monthlyPayment: number;
+  remainingMonths: number;
+}
+
+// ============ PROPERTY TYPES ============
 
 export interface PropertyDetails {
   /** Precio de compra/valor de tasación */
   price: number;
   /** Ubicación (provincia o código postal) */
   location?: string;
+  /** Full address */
+  address?: string;
   /** Tipo de propiedad */
   propertyType: PropertyType;
   /** Año de construcción */
@@ -206,33 +326,35 @@ export interface PropertyDetails {
   surfaceArea?: number;
   /** Necesita reforma */
   needsRenovation?: boolean;
+  /** Energy rating (A-G) */
+  energyRating?: string;
+  /** Has garage */
+  hasGarage?: boolean;
+  /** Has storage room */
+  hasStorageRoom?: boolean;
+  /** Community fees monthly */
+  communityFees?: number;
 }
 
+// ============ USER INPUT TYPES (UPDATED) ============
+
 export interface BorrowerProfile {
-  /** Tipo de empleo principal */
+  /** DEPRECATED: Use borrowers array instead */
   employmentType: EmploymentType;
-  /** Antigüedad en el empleo actual (meses) */
   employmentMonths?: number;
-  /** Ingresos netos mensuales */
   monthlyIncome: number;
-  /** Ingresos adicionales (alquileres, etc.) */
   additionalIncome?: number;
-  /** Pagas extraordinarias al año */
   extraPaymentsPerYear: number;
-  /** Deudas actuales (préstamos personales, tarjetas) */
   monthlyDebtPayments: number;
-  /** Ahorros disponibles para entrada y gastos */
   availableSavings: number;
-  /** Edad del titular principal */
   age: number;
-  /** Número de titulares */
   numberOfBorrowers: number;
-  /** Ingresos del segundo titular (si aplica) */
   coBorrowerIncome?: number;
-  /** Edad del segundo titular */
   coBorrowerAge?: number;
-  /** Tipo de empleo del segundo titular */
   coBorrowerEmploymentType?: EmploymentType;
+  
+  /** NEW: Complete borrower information array */
+  borrowers?: Borrower[];
 }
 
 export interface MortgagePreferences {
@@ -397,6 +519,8 @@ export interface FormData {
   loanAmount: number;
   downPayment: number;
   termYears: number;
+  
+  // Legacy fields (kept for backwards compatibility)
   employmentType: EmploymentType;
   employmentMonths: number;
   monthlyIncome: number;
@@ -409,6 +533,10 @@ export interface FormData {
   coBorrowerIncome: number;
   coBorrowerAge: number;
   coBorrowerEmploymentType: EmploymentType;
+  
+  // NEW: Complete borrowers array
+  borrowers: Borrower[];
+  
   rateTypePreference: RateTypePreference;
   riskTolerance: RiskTolerance;
   acceptLinkedProducts: boolean;
@@ -453,6 +581,28 @@ export interface MaturitySchedule {
 
 // ============ DEFAULT VALUES ============
 
+import { v4 as uuidv4 } from 'uuid';
+
+export const createDefaultBorrower = (order: number = 1): Borrower => ({
+  id: uuidv4(),
+  order,
+  fullName: '',
+  documentId: '',
+  dateOfBirth: '',
+  age: 35,
+  maritalStatus: MaritalStatus.SINGLE,
+  dependents: 0,
+  employmentType: EmploymentType.INDEFINITE_CONTRACT,
+  employmentMonths: 24,
+  monthlyNetIncome: 3000,
+  extraPaymentsPerYear: 2,
+  annualIncome: 42000,
+  additionalMonthlyIncome: 0,
+  monthlyDebtPayments: 0,
+  availableSavings: 60000,
+  isPrincipal: order === 1,
+});
+
 export const DEFAULT_FORM_DATA: FormData = {
   operationType: OperationType.PURCHASE,
   propertyPrice: 250000,
@@ -473,6 +623,7 @@ export const DEFAULT_FORM_DATA: FormData = {
   coBorrowerIncome: 0,
   coBorrowerAge: 0,
   coBorrowerEmploymentType: EmploymentType.INDEFINITE_CONTRACT,
+  borrowers: [createDefaultBorrower(1)],
   rateTypePreference: RateTypePreference.ALL,
   riskTolerance: RiskTolerance.MEDIUM,
   acceptLinkedProducts: true,
@@ -543,4 +694,19 @@ export const LINKED_PRODUCT_LABELS: Record<LinkedProductType, string> = {
   [LinkedProductType.ELECTRICITY]: 'Luz',
   [LinkedProductType.GAS]: 'Gas',
   [LinkedProductType.INTERNET]: 'Internet',
+};
+
+export const MARITAL_STATUS_LABELS: Record<MaritalStatus, string> = {
+  [MaritalStatus.SINGLE]: 'Soltero/a',
+  [MaritalStatus.MARRIED]: 'Casado/a',
+  [MaritalStatus.DIVORCED]: 'Divorciado/a',
+  [MaritalStatus.WIDOWED]: 'Viudo/a',
+  [MaritalStatus.CIVIL_UNION]: 'Pareja de hecho',
+};
+
+export const EMPLOYMENT_SECTOR_LABELS: Record<EmploymentSector, string> = {
+  [EmploymentSector.PRIVATE]: 'Sector Privado',
+  [EmploymentSector.PUBLIC]: 'Sector Público',
+  [EmploymentSector.SELF]: 'Autónomo',
+  [EmploymentSector.RETIRED]: 'Jubilado/Pensionista',
 };

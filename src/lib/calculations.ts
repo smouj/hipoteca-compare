@@ -461,12 +461,17 @@ export function calculateMortgage(
   const ltv = calculateLTV(principal, scenario.propertyDetails.price);
 
   // Calculate debt-to-income ratio
-  const totalMonthlyIncome = 
-    scenario.borrowerProfile.monthlyIncome +
-    (scenario.borrowerProfile.additionalIncome ?? 0) +
-    (scenario.borrowerProfile.coBorrowerIncome ?? 0);
+  // Handle multiple borrowers
+  const borrowers = scenario.borrowerProfile.borrowers || [];
+  const totalMonthlyIncome = borrowers.length > 0
+    ? borrowers.reduce((sum, b) => sum + b.monthlyNetIncome + (b.additionalMonthlyIncome || 0), 0)
+    : scenario.borrowerProfile.monthlyIncome +
+      (scenario.borrowerProfile.additionalIncome ?? 0) +
+      (scenario.borrowerProfile.coBorrowerIncome ?? 0);
   
-  const existingDebtPayments = scenario.borrowerProfile.monthlyDebtPayments;
+  const existingDebtPayments = borrowers.length > 0
+    ? borrowers.reduce((sum, b) => sum + b.monthlyDebtPayments, 0)
+    : scenario.borrowerProfile.monthlyDebtPayments;
   const debtToIncomeRatio = calculateDebtToIncomeRatio(
     monthlyPayment + existingDebtPayments,
     totalMonthlyIncome
@@ -517,39 +522,49 @@ export function isOfferEligible(
     reasons.push(`LTV máximo: ${offer.maxLtv}%`);
   }
 
-  // Check borrower age
-  const maxAge = Math.max(
-    scenario.borrowerProfile.age,
-    scenario.borrowerProfile.coBorrowerAge ?? 0
-  );
+  // Check borrower age - handle multiple borrowers
+  const borrowers = scenario.borrowerProfile.borrowers || [];
+  const maxAge = borrowers.length > 0
+    ? Math.max(...borrowers.map(b => b.age))
+    : Math.max(
+        scenario.borrowerProfile.age,
+        scenario.borrowerProfile.coBorrowerAge ?? 0
+      );
   const ageAtEnd = maxAge + scenario.termYears;
   if (ageAtEnd > offer.maxBorrowerAge) {
     reasons.push(`Edad máxima al finalizar: ${offer.maxBorrowerAge} años`);
   }
 
-  // Check income requirement
+  // Check income requirement - handle multiple borrowers
   if (offer.minIncomeRequirement) {
-    const totalIncome = 
-      scenario.borrowerProfile.monthlyIncome +
-      (scenario.borrowerProfile.coBorrowerIncome ?? 0);
+    const totalIncome = borrowers.length > 0
+      ? borrowers.reduce((sum, b) => sum + b.monthlyNetIncome, 0)
+      : scenario.borrowerProfile.monthlyIncome +
+        (scenario.borrowerProfile.coBorrowerIncome ?? 0);
     if (totalIncome < offer.minIncomeRequirement) {
-      reasons.push(`Ingresos mínimos: ${formatCurrency(offer.minIncomeRequirement)}/mes`);
+      reasons.push(`Ingresos minimos: ${formatCurrency(offer.minIncomeRequirement)}/mes`);
     }
   }
 
-  // Check debt-to-income ratio
+  // Check debt-to-income ratio - handle multiple borrowers
   const monthlyPayment = calculateMonthlyPayment(
     scenario.loanAmount,
     offer.rateCondition.tin,
     scenario.termYears
   );
-  const totalMonthlyIncome = 
-    scenario.borrowerProfile.monthlyIncome +
-    (scenario.borrowerProfile.additionalIncome ?? 0) +
-    (scenario.borrowerProfile.coBorrowerIncome ?? 0);
+  
+  const totalMonthlyIncome = borrowers.length > 0
+    ? borrowers.reduce((sum, b) => sum + b.monthlyNetIncome + (b.additionalMonthlyIncome || 0), 0)
+    : scenario.borrowerProfile.monthlyIncome +
+      (scenario.borrowerProfile.additionalIncome ?? 0) +
+      (scenario.borrowerProfile.coBorrowerIncome ?? 0);
+  
+  const monthlyDebtPayments = borrowers.length > 0
+    ? borrowers.reduce((sum, b) => sum + b.monthlyDebtPayments, 0)
+    : scenario.borrowerProfile.monthlyDebtPayments;
   
   const dti = calculateDebtToIncomeRatio(
-    monthlyPayment + scenario.borrowerProfile.monthlyDebtPayments,
+    monthlyPayment + monthlyDebtPayments,
     totalMonthlyIncome
   );
 

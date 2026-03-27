@@ -2,20 +2,24 @@
 
 import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { UserScenario, ScoredOffer, CompareMortgagesResponse, FormData } from '@/types/mortgage';
+import { UserScenario, ScoredOffer, CompareMortgagesResponse, FormData, ComparisonContext } from '@/types/mortgage';
 import { FormWizard } from '@/components/mortgage/form-wizard';
 import { ResultsList } from '@/components/mortgage/results-list';
+import { ResultsExport } from '@/components/mortgage/results-export';
 import { ChatAssistant } from '@/components/mortgage/chat-assistant';
 import { ErrorAlert } from '@/components/mortgage/error-alert';
+import { CURRENT_EURIBOR } from '@/lib/calculations';
 import { 
   Building2, 
   Calculator, 
   Shield, 
   TrendingUp, 
   ChevronLeft,
-  MessageCircle
+  MessageCircle,
+  FileText
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function Home() {
   const [results, setResults] = useState<ScoredOffer[] | null>(null);
@@ -23,6 +27,7 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<FormData | null>(null);
+  const [comparisonContext, setComparisonContext] = useState<ComparisonContext | null>(null);
 
   const handleSubmit = async (scenario: UserScenario) => {
     setIsLoading(true);
@@ -46,6 +51,36 @@ export default function Home() {
 
       if (data.data?.scoredOffers) {
         setResults(data.data.scoredOffers);
+        setComparisonContext(data.data.comparisonContext);
+        setFormData({
+          ...scenario,
+          borrowers: scenario.borrowerProfile.borrowers || [],
+          propertyPrice: scenario.propertyDetails.price,
+          propertyLocation: scenario.propertyDetails.location || '',
+          propertyType: scenario.propertyDetails.propertyType,
+          loanAmount: scenario.loanAmount,
+          downPayment: scenario.propertyDetails.price - scenario.loanAmount,
+          termYears: scenario.termYears,
+          employmentType: scenario.borrowerProfile.employmentType,
+          employmentMonths: scenario.borrowerProfile.employmentMonths || 0,
+          monthlyIncome: scenario.borrowerProfile.monthlyIncome,
+          additionalIncome: scenario.borrowerProfile.additionalIncome || 0,
+          extraPaymentsPerYear: scenario.borrowerProfile.extraPaymentsPerYear,
+          monthlyDebtPayments: scenario.borrowerProfile.monthlyDebtPayments,
+          availableSavings: scenario.borrowerProfile.availableSavings,
+          age: scenario.borrowerProfile.age,
+          numberOfBorrowers: scenario.borrowerProfile.numberOfBorrowers,
+          coBorrowerIncome: scenario.borrowerProfile.coBorrowerIncome || 0,
+          coBorrowerAge: scenario.borrowerProfile.coBorrowerAge || 0,
+          coBorrowerEmploymentType: scenario.borrowerProfile.coBorrowerEmploymentType || 'INDEFINIDO',
+          rateTypePreference: scenario.preferences.rateTypePreference,
+          riskTolerance: scenario.preferences.riskTolerance,
+          acceptLinkedProducts: scenario.preferences.acceptLinkedProducts,
+          existingProducts: scenario.preferences.existingProducts,
+          desiredTermYears: scenario.preferences.desiredTermYears,
+          prioritizeLowPayment: scenario.preferences.prioritizeLowPayment,
+          willingToSwitchBank: scenario.preferences.willingToSwitchBank,
+        } as FormData);
       }
     } catch (err) {
       console.error('Error submitting form:', err);
@@ -58,6 +93,7 @@ export default function Home() {
   const handleReset = () => {
     setResults(null);
     setError(null);
+    setComparisonContext(null);
   };
 
   const handleStepChange = (step: number, data: FormData) => {
@@ -102,7 +138,7 @@ export default function Home() {
       {/* Main Content */}
       <main className="max-w-6xl mx-auto px-4 py-8">
         {/* Results View */}
-        {results && results.length > 0 ? (
+        {results && results.length > 0 && formData && comparisonContext ? (
           <div className="space-y-6">
             <Button 
               variant="ghost" 
@@ -112,10 +148,34 @@ export default function Home() {
               <ChevronLeft className="h-4 w-4 mr-2" />
               Volver al formulario
             </Button>
-            <ResultsList 
-              scoredOffers={results} 
-              onReset={handleReset} 
-            />
+            
+            <Tabs defaultValue="results" className="w-full">
+              <TabsList className="grid w-full max-w-md grid-cols-2">
+                <TabsTrigger value="results" className="flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4" />
+                  Resultados
+                </TabsTrigger>
+                <TabsTrigger value="export" className="flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  Exportar
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="results" className="mt-6">
+                <ResultsList 
+                  scoredOffers={results} 
+                  onReset={handleReset} 
+                />
+              </TabsContent>
+              
+              <TabsContent value="export" className="mt-6">
+                <ResultsExport
+                  formData={formData}
+                  scoredOffers={results}
+                  comparisonContext={comparisonContext}
+                />
+              </TabsContent>
+            </Tabs>
           </div>
         ) : (
           <>

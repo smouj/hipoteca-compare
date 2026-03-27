@@ -48,14 +48,19 @@ function analyzeRejections(
     rateTypeMismatch: 0,
   };
 
+  // Handle multiple borrowers
+  const borrowers = scenario.borrowerProfile.borrowers || [];
   const ltv = (scenario.loanAmount / scenario.propertyDetails.price) * 100;
-  const maxAge = Math.max(
-    scenario.borrowerProfile.age,
-    scenario.borrowerProfile.coBorrowerAge ?? 0
-  );
-  const totalIncome = 
-    scenario.borrowerProfile.monthlyIncome + 
-    (scenario.borrowerProfile.coBorrowerIncome ?? 0);
+  const maxAge = borrowers.length > 0
+    ? Math.max(...borrowers.map(b => b.age))
+    : Math.max(
+        scenario.borrowerProfile.age,
+        scenario.borrowerProfile.coBorrowerAge ?? 0
+      );
+  const totalIncome = borrowers.length > 0
+    ? borrowers.reduce((sum, b) => sum + b.monthlyNetIncome + (b.additionalMonthlyIncome || 0), 0)
+    : scenario.borrowerProfile.monthlyIncome + 
+      (scenario.borrowerProfile.coBorrowerIncome ?? 0);
 
   for (const offer of offers) {
     let isEligible = true;
@@ -241,13 +246,19 @@ export async function POST(request: NextRequest) {
 
     // Calculate LTV for filtering
     const ltv = (userScenario.loanAmount / userScenario.propertyDetails.price) * 100;
-    const maxAge = Math.max(
-      userScenario.borrowerProfile.age,
-      userScenario.borrowerProfile.coBorrowerAge ?? 0
-    );
-    const totalIncome = 
-      userScenario.borrowerProfile.monthlyIncome + 
-      (userScenario.borrowerProfile.coBorrowerIncome ?? 0);
+    
+    // Handle multiple borrowers
+    const borrowers = userScenario.borrowerProfile.borrowers || [];
+    const maxAge = borrowers.length > 0
+      ? Math.max(...borrowers.map(b => b.age))
+      : Math.max(
+          userScenario.borrowerProfile.age,
+          userScenario.borrowerProfile.coBorrowerAge ?? 0
+        );
+    const totalIncome = borrowers.length > 0
+      ? borrowers.reduce((sum, b) => sum + b.monthlyNetIncome + (b.additionalMonthlyIncome || 0), 0)
+      : userScenario.borrowerProfile.monthlyIncome + 
+        (userScenario.borrowerProfile.coBorrowerIncome ?? 0);
 
     // Filter offers based on eligibility criteria
     const eligibleOffers = MORTGAGE_OFFERS.filter(offer => {
