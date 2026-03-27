@@ -17,7 +17,8 @@ interface StepLoanProps {
   errors: Record<string, string>;
 }
 
-const TERM_OPTIONS = [10, 15, 20, 25, 30, 35, 40];
+// Plazos disponibles - alineados con el catálogo real de ofertas (todas soportan max 30 años)
+const TERM_OPTIONS = [10, 15, 20, 25, 30];
 
 export function StepLoan({ formData, updateFormData, errors }: StepLoanProps) {
   // Track if we're currently editing to avoid overwriting user input

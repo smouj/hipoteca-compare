@@ -1,16 +1,198 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { MORTGAGE_OFFERS } from '@/lib/adapters/offers';
 import { compareOffers } from '@/lib/scoring';
-import { CURRENT_EURIBOR } from '@/lib/calculations';
+import { CURRENT_EURIBOR, formatCurrency } from '@/lib/calculations';
 import { 
   UserScenario, 
   ScoredOffer, 
   ComparisonContext,
   CompareMortgagesRequest,
   CompareMortgagesResponse,
-  MortgageType,
   ComparisonFilter,
 } from '@/types/mortgage';
+
+// ============ INTERFACES FOR DIAGNOSTICS ============
+
+interface RejectionReason {
+  count: number;
+  reason: string;
+  suggestion?: string;
+}
+
+interface DiagnosticResult {
+  totalOffers: number;
+  eligibleOffers: number;
+  rejections: RejectionReason[];
+  primaryIssue: string | null;
+  suggestions: string[];
+}
+
+/**
+ * Analyzes why offers were rejected and returns diagnostic information
+ */
+function analyzeRejections(
+  scenario: UserScenario,
+  offers: typeof MORTGAGE_OFFERS
+): DiagnosticResult {
+  const rejections: RejectionReason[] = [];
+  let eligibleCount = 0;
+
+  // Count rejections by reason
+  const rejectionCounts = {
+    loanAmountTooLow: 0,
+    loanAmountTooHigh: 0,
+    termTooLong: 0,
+    ltvTooHigh: 0,
+    ageAtEndTooHigh: 0,
+    incomeTooLow: 0,
+    rateTypeMismatch: 0,
+  };
+
+  const ltv = (scenario.loanAmount / scenario.propertyDetails.price) * 100;
+  const maxAge = Math.max(
+    scenario.borrowerProfile.age,
+    scenario.borrowerProfile.coBorrowerAge ?? 0
+  );
+  const totalIncome = 
+    scenario.borrowerProfile.monthlyIncome + 
+    (scenario.borrowerProfile.coBorrowerIncome ?? 0);
+
+  for (const offer of offers) {
+    let isEligible = true;
+
+    // Check loan amount range
+    if (scenario.loanAmount < offer.minLoanAmount) {
+      rejectionCounts.loanAmountTooLow++;
+      isEligible = false;
+    }
+    if (scenario.loanAmount > offer.maxLoanAmount) {
+      rejectionCounts.loanAmountTooHigh++;
+      isEligible = false;
+    }
+
+    // Check term
+    if (scenario.termYears > offer.maxTermYears) {
+      rejectionCounts.termTooLong++;
+      isEligible = false;
+    }
+
+    // Check LTV
+    if (ltv > offer.maxLtv) {
+      rejectionCounts.ltvTooHigh++;
+      isEligible = false;
+    }
+
+    // Check borrower age at end of term
+    if (maxAge + scenario.termYears > offer.maxBorrowerAge) {
+      rejectionCounts.ageAtEndTooHigh++;
+      isEligible = false;
+    }
+
+    // Check minimum income requirement
+    if (offer.minIncomeRequirement && totalIncome < offer.minIncomeRequirement) {
+      rejectionCounts.incomeTooLow++;
+      isEligible = false;
+    }
+
+    // Check rate type preference
+    if (scenario.preferences?.rateTypePreference) {
+      const pref = scenario.preferences.rateTypePreference;
+      if (pref === 'SOLO_FIJA' && offer.mortgageType !== 'FIJA') {
+        rejectionCounts.rateTypeMismatch++;
+        isEligible = false;
+      }
+    }
+
+    if (isEligible) {
+      eligibleCount++;
+    }
+  }
+
+  // Build rejection reasons array with suggestions
+  if (rejectionCounts.loanAmountTooLow > 0) {
+    const minRequired = Math.min(...offers.map(o => o.minLoanAmount));
+    rejections.push({
+      count: rejectionCounts.loanAmountTooLow,
+      reason: `Importe demasiado bajo (mínimo ${formatCurrency(minRequired)})`,
+      suggestion: `Aumenta el importe del préstamo a al menos ${formatCurrency(minRequired)}`,
+    });
+  }
+
+  if (rejectionCounts.loanAmountTooHigh > 0) {
+    const maxAllowed = Math.max(...offers.map(o => o.maxLoanAmount));
+    rejections.push({
+      count: rejectionCounts.loanAmountTooHigh,
+      reason: `Importe demasiado alto (máximo ${formatCurrency(maxAllowed)})`,
+      suggestion: `Reduce el importe del préstamo o busca financiación privada`,
+    });
+  }
+
+  if (rejectionCounts.termTooLong > 0) {
+    const maxTerm = Math.max(...offers.map(o => o.maxTermYears));
+    rejections.push({
+      count: rejectionCounts.termTooLong,
+      reason: `Plazo demasiado largo (máximo ${maxTerm} años)`,
+      suggestion: `Reduce el plazo a ${maxTerm} años o menos`,
+    });
+  }
+
+  if (rejectionCounts.ltvTooHigh > 0) {
+    rejections.push({
+      count: rejectionCounts.ltvTooHigh,
+      reason: `LTV demasiado alto (${ltv.toFixed(1)}% > 80%)`,
+      suggestion: `Aumenta la entrada para reducir la financiación al 80% o menos`,
+    });
+  }
+
+  if (rejectionCounts.ageAtEndTooHigh > 0) {
+    const maxAgeEnd = Math.min(...offers.map(o => o.maxBorrowerAge));
+    rejections.push({
+      count: rejectionCounts.ageAtEndTooHigh,
+      reason: `Edad al finalizar demasiado alta (máximo ${maxAgeEnd} años)`,
+      suggestion: `Reduce el plazo o incluye un titular más joven`,
+    });
+  }
+
+  if (rejectionCounts.incomeTooLow > 0) {
+    rejections.push({
+      count: rejectionCounts.incomeTooLow,
+      reason: `Ingresos insuficientes para algunas ofertas`,
+      suggestion: `Considera añadir un cotitular con ingresos o reducir el importe`,
+    });
+  }
+
+  if (rejectionCounts.rateTypeMismatch > 0) {
+    rejections.push({
+      count: rejectionCounts.rateTypeMismatch,
+      reason: `Preferencia de tipo restrictiva`,
+      suggestion: `Considera permitir otros tipos de hipoteca (variable o mixta)`,
+    });
+  }
+
+  // Sort by count (most common first)
+  rejections.sort((a, b) => b.count - a.count);
+
+  // Determine primary issue
+  let primaryIssue: string | null = null;
+  const suggestions: string[] = [];
+
+  if (rejections.length > 0) {
+    primaryIssue = rejections[0]!.reason;
+    rejections.forEach(r => {
+      if (r.suggestion) {
+        suggestions.push(r.suggestion);
+      }
+    });
+  }
+
+  return {
+    totalOffers: offers.length,
+    eligibleOffers: eligibleCount,
+    rejections,
+    primaryIssue,
+    suggestions,
+  };
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -57,7 +239,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Filter offers based on basic eligibility
+    // Calculate LTV for filtering
+    const ltv = (userScenario.loanAmount / userScenario.propertyDetails.price) * 100;
+    const maxAge = Math.max(
+      userScenario.borrowerProfile.age,
+      userScenario.borrowerProfile.coBorrowerAge ?? 0
+    );
+    const totalIncome = 
+      userScenario.borrowerProfile.monthlyIncome + 
+      (userScenario.borrowerProfile.coBorrowerIncome ?? 0);
+
+    // Filter offers based on eligibility criteria
     const eligibleOffers = MORTGAGE_OFFERS.filter(offer => {
       // Check loan amount range
       if (userScenario.loanAmount < offer.minLoanAmount || 
@@ -70,55 +262,58 @@ export async function POST(request: NextRequest) {
         return false;
       }
 
-      // Check LTV (basic check)
-      const ltv = (userScenario.loanAmount / userScenario.propertyDetails.price) * 100;
+      // Check LTV
       if (ltv > offer.maxLtv) {
         return false;
       }
 
       // Check borrower age at end of term
-      const maxAge = Math.max(
-        userScenario.borrowerProfile.age,
-        userScenario.borrowerProfile.coBorrowerAge ?? 0
-      );
       if (maxAge + userScenario.termYears > offer.maxBorrowerAge) {
         return false;
       }
 
       // Check minimum income requirement
-      if (offer.minIncomeRequirement) {
-        const totalIncome = 
-          userScenario.borrowerProfile.monthlyIncome + 
-          (userScenario.borrowerProfile.coBorrowerIncome ?? 0);
-        if (totalIncome < offer.minIncomeRequirement) {
-          return false;
-        }
+      if (offer.minIncomeRequirement && totalIncome < offer.minIncomeRequirement) {
+        return false;
       }
 
       // Filter by rate type preference
       if (userScenario.preferences?.rateTypePreference) {
         const pref = userScenario.preferences.rateTypePreference;
-        
         if (pref === 'SOLO_FIJA' && offer.mortgageType !== 'FIJA') {
           return false;
-        }
-        if (pref === 'PREFERENCIA_MIXTA' && offer.mortgageType === 'VARIABLE') {
-          // Still include, but deprioritize
-        }
-        if (pref === 'PREFERENCIA_VARIABLE' && offer.mortgageType === 'FIJA') {
-          // Still include, but deprioritize
         }
       }
 
       return true;
     });
 
-    // If no eligible offers, return informative message
+    // If no eligible offers, provide detailed diagnostic
     if (eligibleOffers.length === 0) {
+      const diagnostic = analyzeRejections(userScenario, MORTGAGE_OFFERS);
+      
+      // Build informative error message
+      let errorMessage = 'No se encontraron hipotecas compatibles con tu perfil.\n\n';
+      
+      if (diagnostic.primaryIssue) {
+        errorMessage += `**Principal motivo:** ${diagnostic.primaryIssue}\n\n`;
+      }
+
+      if (diagnostic.suggestions.length > 0) {
+        errorMessage += '**Sugerencias:**\n';
+        diagnostic.suggestions.slice(0, 3).forEach((s, i) => {
+          errorMessage += `${i + 1}. ${s}\n`;
+        });
+      }
+
+      // Add diagnostic details for transparency
+      errorMessage += `\n*Análisis: de ${diagnostic.totalOffers} ofertas, `;
+      errorMessage += `${diagnostic.rejections.map(r => `${r.count} por ${r.reason.toLowerCase()}`).join(', ')}.*`;
+
       return NextResponse.json<CompareMortgagesResponse>(
         { 
           success: false, 
-          error: 'No se encontraron hipotecas que cumplan con los criterios especificados. Intenta ajustar el importe, plazo o LTV.' 
+          error: errorMessage,
         },
         { status: 200 }
       );
@@ -160,8 +355,21 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// GET endpoint for fetching available offers (for debugging/info)
+// GET endpoint for fetching available offers info and constraints
 export async function GET() {
+  // Calculate constraints from the offers dataset
+  const minLoanAmount = Math.min(...MORTGAGE_OFFERS.map(o => o.minLoanAmount));
+  const maxLoanAmount = Math.max(...MORTGAGE_OFFERS.map(o => o.maxLoanAmount));
+  const maxTermYears = Math.max(...MORTGAGE_OFFERS.map(o => o.maxTermYears));
+  const maxLtv = Math.max(...MORTGAGE_OFFERS.map(o => o.maxLtv));
+  const maxBorrowerAge = Math.min(...MORTGAGE_OFFERS.map(o => o.maxBorrowerAge));
+  const minIncomeRequirements = MORTGAGE_OFFERS
+    .filter(o => o.minIncomeRequirement)
+    .map(o => o.minIncomeRequirement!);
+  const minIncomeRequired = minIncomeRequirements.length > 0 
+    ? Math.min(...minIncomeRequirements) 
+    : 0;
+
   return NextResponse.json({
     totalOffers: MORTGAGE_OFFERS.length,
     currentEuribor: CURRENT_EURIBOR,
@@ -169,6 +377,14 @@ export async function GET() {
       fixed: MORTGAGE_OFFERS.filter(o => o.mortgageType === 'FIJA').length,
       variable: MORTGAGE_OFFERS.filter(o => o.mortgageType === 'VARIABLE').length,
       mixed: MORTGAGE_OFFERS.filter(o => o.mortgageType === 'MIXTA').length,
+    },
+    constraints: {
+      minLoanAmount,
+      maxLoanAmount,
+      maxTermYears,
+      maxLtv,
+      maxBorrowerAge,
+      minIncomeRequired,
     },
     lastUpdated: new Date().toISOString(),
   });

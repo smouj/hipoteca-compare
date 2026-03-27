@@ -2,17 +2,16 @@
 
 import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { UserScenario, ScoredOffer, CompareMortgagesResponse, FormData } from '@/types/mortgage';
 import { FormWizard } from '@/components/mortgage/form-wizard';
 import { ResultsList } from '@/components/mortgage/results-list';
 import { ChatAssistant } from '@/components/mortgage/chat-assistant';
+import { ErrorAlert } from '@/components/mortgage/error-alert';
 import { 
   Building2, 
   Calculator, 
   Shield, 
   TrendingUp, 
-  AlertCircle,
   ChevronLeft,
   MessageCircle
 } from 'lucide-react';
@@ -192,12 +191,7 @@ export default function Home() {
 
             {/* Error Alert */}
             {error && (
-              <Alert className="mb-6 bg-red-50 border-red-200">
-                <AlertCircle className="h-4 w-4 text-red-600" />
-                <AlertDescription className="text-red-800">
-                  {error}
-                </AlertDescription>
-              </Alert>
+              <ErrorAlert error={error} />
             )}
 
             {/* Form Wizard */}
