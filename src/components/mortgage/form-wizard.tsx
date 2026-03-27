@@ -28,57 +28,66 @@ const STEPS = [
 
 const STORAGE_KEY = 'hipoteca-compare-form-data';
 
-// Helper function to load saved form data
-function loadSavedFormData(): FormData {
-  if (typeof window === 'undefined') return { ...DEFAULT_FORM_DATA, borrowers: [createDefaultBorrower(1)] };
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      const parsed = JSON.parse(saved) as FormData;
-      if (parsed && typeof parsed.propertyPrice === 'number') {
-        // Ensure borrowers array exists
-        if (!parsed.borrowers || parsed.borrowers.length === 0) {
-          parsed.borrowers = [createDefaultBorrower(1)];
-        }
-        return parsed;
-      }
-    }
-  } catch (e) {
-    console.error('Failed to load saved form data:', e);
-  }
-  return { ...DEFAULT_FORM_DATA, borrowers: [createDefaultBorrower(1)] };
-}
+// Default form data with proper initialization
+const getInitialFormData = (): FormData => ({
+  ...DEFAULT_FORM_DATA,
+  borrowers: [createDefaultBorrower(1)],
+});
 
 export function FormWizard({ onSubmit, isLoading, onStepChange }: FormWizardProps) {
   const [currentStep, setCurrentStep] = useState(0);
-  const [formData, setFormData] = useState<FormData>(loadSavedFormData);
+  const [formData, setFormData] = useState<FormData>(getInitialFormData);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isMounted, setIsMounted] = useState(false);
 
-  // Save to localStorage when formData changes
+  // Load saved form data after mount (client-side only)
   useEffect(() => {
+    setIsMounted(true);
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved) as FormData;
+        if (parsed && typeof parsed.propertyPrice === 'number') {
+          // Ensure borrowers array exists
+          if (!parsed.borrowers || parsed.borrowers.length === 0) {
+            parsed.borrowers = [createDefaultBorrower(1)];
+          }
+          setFormData(parsed);
+        }
+      }
+    } catch (e) {
+      console.error('Failed to load saved form data:', e);
+    }
+  }, []);
+
+  // Save to localStorage when formData changes (after mount)
+  useEffect(() => {
+    if (!isMounted) return;
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(formData));
     } catch (e) {
       console.error('Failed to save form data:', e);
     }
-  }, [formData]);
+  }, [formData, isMounted]);
 
   // Notify parent of step and data changes
   useEffect(() => {
-    if (onStepChange) {
+    if (onStepChange && isMounted) {
       onStepChange(currentStep, formData);
     }
-  }, [currentStep, formData, onStepChange]);
+  }, [currentStep, formData, onStepChange, isMounted]);
 
   const updateFormData = useCallback((updates: Partial<FormData>) => {
     setFormData((prev) => ({ ...prev, ...updates }));
     // Clear errors for updated fields
-    const clearedErrors = { ...errors };
-    Object.keys(updates).forEach((key) => {
-      delete clearedErrors[key];
+    setErrors((prevErrors) => {
+      const clearedErrors = { ...prevErrors };
+      Object.keys(updates).forEach((key) => {
+        delete clearedErrors[key];
+      });
+      return clearedErrors;
     });
-    setErrors(clearedErrors);
-  }, [errors]);
+  }, []);
 
   const validateStep = (step: number): boolean => {
     const newErrors: Record<string, string> = {};
@@ -203,11 +212,13 @@ export function FormWizard({ onSubmit, isLoading, onStepChange }: FormWizardProp
   };
 
   const handleReset = () => {
-    const freshData = { ...DEFAULT_FORM_DATA, borrowers: [createDefaultBorrower(1)] };
+    const freshData = getInitialFormData();
     setFormData(freshData);
     setCurrentStep(0);
     setErrors({});
-    localStorage.removeItem(STORAGE_KEY);
+    if (isMounted) {
+      localStorage.removeItem(STORAGE_KEY);
+    }
   };
 
   const progress = ((currentStep + 1) / STEPS.length) * 100;

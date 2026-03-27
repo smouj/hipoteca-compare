@@ -1,55 +1,53 @@
 import { NextRequest, NextResponse } from 'next/server';
 import ZAI from 'z-ai-web-dev-sdk';
 
-// System prompt for the mortgage assistant
-const SYSTEM_PROMPT = `Eres un asistente experto en hipotecas en España. Tu nombre es HipotecaBot y trabajas para HipotecaCompare.
-
-Tu función es ayudar a los usuarios a entender:
-- Tipos de hipotecas (fija, variable, mixta)
-- Cómo funcionan los tipos de interés (TIN, TAE, Euríbor)
-- Comisiones habituales (apertura, amortización anticipada, subrogación)
-- Productos vinculados (nómina, seguros, planes de pensiones)
-- Requisitos para conseguir una hipoteca
-- Qué es el LTV y cómo afecta
-- Diferencias entre bancos españoles
-
-Reglas importantes:
-1. Sé claro y conciso, pero explica los conceptos de forma que cualquiera pueda entenderlos
-2. Cuando hables de tipos o comisiones, menciona rangos típicos del mercado español actual
-3. Recomienda que el usuario compare ofertas específicas usando el comparador
-4. Nunca des consejo financiero personalizado como si fueras un asesor regulado
-5. Si no sabes algo, dilo honestamente
-6. Usa un tono profesional pero cercano
-7. Responde siempre en español
-
-Datos actuales del mercado (Marzo 2026):
-- Euríbor actual: ~2.5%
-- Hipotecas fijas: desde 2.3% TIN
-- Hipotecas variables: Euríbor + 0.65% a 0.90%
-- Hipotecas mixtas: 1.3% a 2.1% durante periodo fijo
-
-Bancos principales en España: Santander, BBVA, CaixaBank, Bankinter, Sabadell, Unicaja, Ibercaja, Kutxabank, Abanca, ING.`;
-
 interface ChatMessage {
-  role: 'system' | 'user' | 'assistant';
+  role: 'user' | 'assistant';
   content: string;
 }
 
+interface ChatRequest {
+  messages: ChatMessage[];
+  context?: {
+    currentStep?: string;
+    formData?: Record<string, unknown>;
+    resultsCount?: number;
+  };
+}
+
+// System prompt for the mortgage assistant
+const SYSTEM_PROMPT = `Eres HipotecaBot, un asistente experto en hipotecas en España. Tu objetivo es ayudar a los usuarios a entender mejor las opciones de financiación hipotecaria.
+
+Conocimientos clave:
+- Tipos de hipotecas: fija, variable, mixta
+- TAE (Tasa Anual Equivalente) y TIN (Tipo de Interés Nominal)
+- Euríbor y su impacto en hipotecas variables
+- LTV (Loan to Value) - ratio préstamo/valor
+- Vinculaciones típicas: nómina, seguros, plan de pensiones
+- Comisiones: apertura, amortización anticipada, subrogación
+- Gastos de compraventa: ITP, IVA, notaría, registro
+- Requisitos típicos: ingresos, estabilidad laboral, ahorros
+
+Normas de comportamiento:
+- Responde de forma clara y concisa en español
+- Usa ejemplos numéricos cuando sea útil
+- Sé honesto sobre las limitaciones de la información
+- Recomienda consultar con entidades financieras para condiciones específicas
+- Si el contexto del usuario está disponible, personaliza la respuesta
+
+El contexto actual del usuario puede incluir:
+- Paso actual del formulario
+- Datos introducidos (importes, plazos, ingresos, etc.)
+- Número de resultados de comparación obtenidos`;
+
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { messages, context } = body as { 
-      messages: ChatMessage[]; 
-      context?: {
-        currentStep?: string;
-        formData?: Record<string, unknown>;
-        resultsCount?: number;
-      };
-    };
+    const body = await request.json() as ChatRequest;
+    const { messages, context } = body;
 
     if (!messages || !Array.isArray(messages)) {
       return NextResponse.json(
-        { error: 'Se requiere un array de mensajes' },
+        { success: false, error: 'Messages array is required' },
         { status: 400 }
       );
     }
@@ -57,67 +55,58 @@ export async function POST(request: NextRequest) {
     // Initialize ZAI
     const zai = await ZAI.create();
 
-    // Build context-aware system prompt
-    let enhancedSystemPrompt = SYSTEM_PROMPT;
-    
+    // Build context message
+    let contextMessage = '';
     if (context) {
-      enhancedSystemPrompt += '\n\n--- CONTEXTO ACTUAL DEL USUARIO ---';
-      
+      contextMessage = '\n\nContexto del usuario:\n';
       if (context.currentStep) {
-        enhancedSystemPrompt += `\nEl usuario está en el paso: ${context.currentStep}`;
+        contextMessage += `- Paso actual: ${context.currentStep}\n`;
       }
-      
-      if (context.formData) {
-        const fd = context.formData;
-        if (fd.propertyPrice) {
-          enhancedSystemPrompt += `\nPrecio propiedad: ${fd.propertyPrice}€`;
-        }
-        if (fd.loanAmount) {
-          enhancedSystemPrompt += `\nImporte préstamo: ${fd.loanAmount}€`;
-        }
-        if (fd.termYears) {
-          enhancedSystemPrompt += `\nPlazo: ${fd.termYears} años`;
-        }
-        if (fd.monthlyIncome) {
-          enhancedSystemPrompt += `\nIngresos mensuales: ${fd.monthlyIncome}€`;
-        }
-      }
-      
       if (context.resultsCount !== undefined) {
-        enhancedSystemPrompt += `\nResultados mostrados: ${context.resultsCount} hipotecas`;
+        contextMessage += `- Ofertas encontradas: ${context.resultsCount}\n`;
       }
-      
-      enhancedSystemPrompt += '\nUsa este contexto para personalizar tu respuesta si es relevante.';
+      if (context.formData) {
+        const fd = context.formData as Record<string, unknown>;
+        if (fd.propertyPrice) contextMessage += `- Precio vivienda: ${fd.propertyPrice}€\n`;
+        if (fd.loanAmount) contextMessage += `- Importe préstamo: ${fd.loanAmount}€\n`;
+        if (fd.termYears) contextMessage += `- Plazo: ${fd.termYears} años\n`;
+        if (fd.numberOfBorrowers) contextMessage += `- Titulares: ${fd.numberOfBorrowers}\n`;
+      }
     }
 
-    // Build messages array for the API
-    const apiMessages = [
-      { role: 'system' as const, content: enhancedSystemPrompt },
-      ...messages.filter(m => m.role !== 'system').slice(-10) // Keep last 10 messages for context
+    // Build messages for the chat
+    const chatMessages = [
+      { role: 'system', content: SYSTEM_PROMPT + contextMessage },
+      ...messages.map(m => ({
+        role: m.role as 'user' | 'assistant',
+        content: m.content,
+      })),
     ];
 
     // Call the AI
     const completion = await zai.chat.completions.create({
-      messages: apiMessages,
+      messages: chatMessages,
       temperature: 0.7,
-      max_tokens: 1000,
+      max_tokens: 500,
     });
 
-    const assistantMessage = completion.choices[0]?.message?.content || 
-      'Lo siento, no pude procesar tu pregunta. Por favor, inténtalo de nuevo.';
+    const responseContent = completion.choices[0]?.message?.content;
+
+    if (!responseContent) {
+      throw new Error('No response from AI');
+    }
 
     return NextResponse.json({
       success: true,
-      message: assistantMessage,
+      message: responseContent,
     });
 
   } catch (error) {
-    console.error('Error in chat API:', error);
-    
+    console.error('Chat API error:', error);
     return NextResponse.json(
       { 
-        error: 'Error al procesar la consulta. Por favor, inténtalo de nuevo.',
-        success: false 
+        success: false, 
+        error: 'Error al procesar la consulta. Por favor, inténtalo de nuevo.' 
       },
       { status: 500 }
     );

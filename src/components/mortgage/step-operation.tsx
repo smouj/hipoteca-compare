@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -74,9 +74,23 @@ const SPANISH_PROVINCES = [
 ];
 
 export function StepOperation({ formData, updateFormData, errors }: StepOperationProps) {
-  const [priceInput, setPriceInput] = useState(
-    formData.propertyPrice > 0 ? formData.propertyPrice.toString() : ''
-  );
+  const [priceInput, setPriceInput] = useState('');
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Sync priceInput with formData after mount to avoid hydration issues
+  useEffect(() => {
+    setIsMounted(true);
+    if (formData.propertyPrice > 0) {
+      setPriceInput(formData.propertyPrice.toString());
+    }
+  }, []);
+
+  // Update priceInput if formData changes externally
+  useEffect(() => {
+    if (isMounted && formData.propertyPrice > 0 && priceInput === '') {
+      setPriceInput(formData.propertyPrice.toString());
+    }
+  }, [formData.propertyPrice, isMounted, priceInput]);
 
   const handlePriceChange = (value: string) => {
     // Remove non-numeric characters except dots and commas
@@ -164,7 +178,7 @@ export function StepOperation({ formData, updateFormData, errors }: StepOperatio
               />
               <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium">€</span>
             </div>
-            {formData.propertyPrice > 0 && (
+            {formData.propertyPrice > 0 && isMounted && (
               <p className="text-sm text-slate-600">
                 Valor: <span className="font-medium">{formatCurrency(formData.propertyPrice)}</span>
               </p>
