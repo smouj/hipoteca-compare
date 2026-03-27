@@ -200,18 +200,26 @@ Haz clic en el botón verde 💬 en la esquina inferior derecha para abrir el ch
 
 ## 🏦 Bancos Incluidos
 
-| Banco | Tipo | Ofertas |
-|-------|------|---------|
-| Banco Santander | Tradicional | Fija, Variable, Mixta |
-| BBVA | Tradicional | Fija, Variable, Mixta |
-| CaixaBank | Tradicional | Fija, Mixta |
-| Bankinter | Tradicional | Fija, Variable, Mixta |
-| Banco Sabadell | Tradicional | Fija, Mixta |
-| Unicaja Banco | Tradicional | Fija, Mixta |
-| Ibercaja | Regional | Fija, Mixta |
-| Kutxabank | Regional | - |
-| Abanca | Regional | Fija |
-| ING | Online | Fija, Mixta |
+| Banco | Tipo | Ofertas | LTV Máx |
+|-------|------|---------|---------|
+| Banco Santander | Tradicional | Fija, Variable, Mixta, Sin Entrada | 90% |
+| BBVA | Tradicional | Fija, Variable, Mixta, Sin Entrada | 95% |
+| CaixaBank | Tradicional | Fija, Mixta, Hipoteca Joven | 95% |
+| Bankinter | Tradicional | Fija, Variable, Mixta, Alto LTV | 90% |
+| Banco Sabadell | Tradicional | Fija, Mixta | 80% |
+| Unicaja Banco | Tradicional | Fija, Mixta | 80% |
+| Ibercaja | Regional | Fija, Mixta | 80% |
+| Kutxabank | Regional | - | 80% |
+| Abanca | Regional | Fija | 80% |
+| ING | Online | Fija, Mixta, Sin Entrada | 90% |
+
+### Financiación Alta (LTV > 80%)
+
+Disponemos de **5 ofertas específicas** para financiación superior al 80%:
+- Hipotecas sin entrada (hasta 95% LTV)
+- Hipoteca Joven para menores de 35 años (hasta 95%)
+- Ofertas con seguro de impago obligatorio
+- Tipos ligeramente superiores (+0.2-0.4%)
 
 ---
 
@@ -268,11 +276,13 @@ Chat con el asistente AI.
 - Los tipos de interés son orientativos y pueden variar
 - Las condiciones finales dependen del perfil completo del solicitante
 - No se incluyen ofertas de todos los bancos del mercado español
+- Las ofertas de alto LTV (>80%) están marcadas como ESTIMATED
 
 ### Técnico
 - Plazo máximo soportado: 30 años (restricción del catálogo actual)
-- LTV máximo: 80% para vivienda habitual
+- LTV máximo: 100% permitido en el formulario, 95% en ofertas disponibles
 - Sin autenticación de usuario (persistencia solo en localStorage)
+- Ofertas alto LTV requieren perfil solvente (ingresos > 2500€/mes)
 
 ---
 
